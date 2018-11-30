@@ -1,6 +1,7 @@
 # https://docs.opencv.org/3.0-beta/doc/py_tutorials/py_feature2d/py_features_harris/py_features_harris.html
 # https://stackoverflow.com/questions/29415719/how-do-i-create-keypoints-to-compute-sift
 # https://kushalvyas.github.io/BOV.html
+# https://datascience.stackexchange.com/questions/16700/confused-about-how-to-apply-kmeans-on-my-a-dataset-with-features-extracted
 import cv2
 import numpy as np
 
@@ -12,8 +13,9 @@ def harris(img):
     '''
 
     gray_img = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
-    gray_img = np.float32(gray_img)
-    dst = cv2.cornerHarris(gray_img, 2, 3, 0.04)
+    gray_img1 = np.float32(gray_img)
+    dst = cv2.cornerHarris(gray_img1, 2, 3, 0.15)
+    # change last param between (0.04-0.18)
     result_img = img.copy() # deep copy image
 
     # Threshold for an optimal value, it may vary depending on the image.
@@ -23,18 +25,18 @@ def harris(img):
     keypoints = np.argwhere(dst > 0.01 * dst.max())
     keypoints = [cv2.KeyPoint(x[1], x[0], 1) for x in keypoints]
 
-    return (keypoints, result_img)
+    return (keypoints, gray_img)
 
 sift = cv2.xfeatures2d.SIFT_create()
-img = cv2.imread("grid.png")
+img = cv2.imread("image_0003.jpg")
 
-(kps, r_img) = harris(img)
+(kps, gray_img) = harris(img)
+features = sift.compute(gray_img, kps)
 
-abc = sift.compute(r_img, kps)
 print(len(kps))
-print(len(abc[1]))
+print(features[1][0])
 
-# cv2.imshow('dst', r_img)
+# cv2.imshow('asd',gray_img)
 #
 # if cv2.waitKey(0) & 0xff == 27:
 #     cv2.destroyAllWindows()
