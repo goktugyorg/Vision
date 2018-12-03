@@ -4,7 +4,17 @@
 # https://datascience.stackexchange.com/questions/16700/confused-about-how-to-apply-kmeans-on-my-a-dataset-with-features-extracted
 import cv2
 import numpy as np
+import os
+import pandas
 
+def file_traverse(path):
+    df = pandas.DataFrame(columns=['name', 'class', 'istest'])
+    idx = 0
+    for root, dirs, files in os.walk(path):
+        for idx, file_ in files:
+            df.loc[idx] = [file_,root.split('/')[1].split('\\')[0],root.split('/')[1].split('\\')[1] == 'test']
+            idx += 1
+    return df
 def harris(img):
     '''
     Harris detector
@@ -27,11 +37,14 @@ def harris(img):
 
     return (keypoints, gray_img)
 
+
+image_df = file_traverse()
 sift = cv2.xfeatures2d.SIFT_create()
-img = cv2.imread("image_0003.jpg")
+img = cv2.imread("dataset/camera/test/image_0027.jpg")
 
 (kps, gray_img) = harris(img)
 features = sift.compute(gray_img, kps)
+
 
 print(len(kps))
 print(features[1][0])
