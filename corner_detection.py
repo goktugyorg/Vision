@@ -6,26 +6,32 @@ import cv2
 import numpy as np
 import os
 import pandas
+from sklearn.cluster import KMeans
+import xlsxwriter
+
 
 def file_traverse(path):
-    df = pandas.DataFrame(columns=['name', 'class', 'istest'])
+    sift = cv2.xfeatures2d.SIFT_create()
+    df = pandas.DataFrame(columns=['name', 'class', 'istest', 'keypoint_count', 'features'])
     idx = 0
     for root, dirs, files in os.walk(path):
-        for idx, file_ in files:
-            df.loc[idx] = [file_,root.split('/')[1].split('\\')[0],root.split('/')[1].split('\\')[1] == 'test']
+        for file_ in files:
+            img = cv2.imread(os.path.join(root, file_))
+            (kps, gray_img) = harris(img)
+            features = sift.compute(gray_img, kps)
+            df.loc[idx] = [file_,root.split('/')[1].split('\\')[0],root.split('/')[1].split('\\')[1] == 'test',len(kps), features]
+
+            if(idx%50==0):
+                print(idx)
+
             idx += 1
     return df
-def harris(img):
-    '''
-    Harris detector
-    :param img: an color image
-    :return: keypoint, image with feature marked corner
-    '''
 
+def harris(img):
     gray_img = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
     gray_img1 = np.float32(gray_img)
-    dst = cv2.cornerHarris(gray_img1, 2, 3, 0.15)
-    # change last param between (0.04-0.18)
+    dst = cv2.cornerHarris(gray_img1, 2, 3, 0.21)
+    # change last param between (0.04-0.22)
     result_img = img.copy() # deep copy image
 
     # Threshold for an optimal value, it may vary depending on the image.
@@ -37,17 +43,33 @@ def harris(img):
 
     return (keypoints, gray_img)
 
+image_df = file_traverse('dataset/')
+feature_list = []
 
-image_df = file_traverse()
-sift = cv2.xfeatures2d.SIFT_create()
-img = cv2.imread("dataset/camera/test/image_0027.jpg")
+for index, row in image_df.iterrows():
+    for feature in row['features'][1]:
+        feature_list.append(feature)
 
-(kps, gray_img) = harris(img)
-features = sift.compute(gray_img, kps)
+print(len(feature_list))
 
+feature_np = np.array(feature_list)
 
-print(len(kps))
-print(features[1][0])
+kmeans = KMeans(n_clusters=10)
+kmeans.fit(feature_np)
+y_kmeans = kmeans.predict(feature_np)
+
+image_df['ymeans'] = y_kmeans
+
+writer = pandas.ExcelWriter('images.xlsx', engine='xlsxwriter')
+image_df.to_excel(writer, sheet_name='Sheet1')
+writer.save()
+
+# img = cv2.imread("dataset/camera/test/image_0027.jpg")
+# sift = cv2.xfeatures2d.SIFT_create()
+# (kps, gray_img) = harris(img)
+# features = sift.compute(gray_img, kps)
+# print(len(kps))
+# print(features[1][2])
 
 # cv2.imshow('asd',gray_img)
 #
