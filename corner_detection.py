@@ -72,23 +72,25 @@ feature_np = np.array(feature_list)
 model = load_model(k)
 y_kmeans = model.predict(feature_np)
 
-histogram = [int(0)] * k
-image_df['histogram'] = 0
-for index,row in image_df.iterrows():
-    row['histogram'] = np.zeros((k,), dtype=int)
+# histogram = [int(0)] * k
+# image_df['histogram'] = 0
+# for index,row in image_df.iterrows():
+#     row['histogram'] = np.zeros((k,), dtype=int)
 
-# histograms = [[0 for x in range(k)] for y in range(len(image_df))]
+histograms = [[0 for x in range(k)] for y in range(len(image_df))]
 
 pos = 0
 for index,row in image_df.iterrows():
     for feature in row['features'][1]:
-        print(row['histogram'][y_kmeans[1635]])
-        row['histogram'][y_kmeans[pos]] += 1
-        # histograms[index][int(y_kmeans[pos])] += 1
+        # row['histogram'][y_kmeans[pos]] += 1
+        histograms[index][int(y_kmeans[pos])] += 1
         pos += 1
 
 print("--- %s seconds ---" % (time.time() - start_time))
 
+image_df['histogram'] = 0
+for index, row in image_df.iterrows():
+    row['histogram'] = histograms[index]
 # image_df['ymeans'] = y_kmeans
 #
 writer = pandas.ExcelWriter('images.xlsx', engine='xlsxwriter')
