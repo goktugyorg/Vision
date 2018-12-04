@@ -7,6 +7,8 @@ import numpy as np
 import os
 import pandas
 from sklearn.cluster import KMeans
+import time
+import pickle
 import xlsxwriter
 
 
@@ -43,26 +45,43 @@ def harris(img):
 
     return (keypoints, gray_img)
 
+def train_kmeans(feature_np,k):
+    kmeans = KMeans(n_clusters=k)
+    kmeans.fit(feature_np)
+    filename = str(k) + 'kmodel.sav'
+    pickle.dump(kmeans, open(filename, 'wb'))
+    return kmeans
+
+def load_model(k):
+    filename = str(k) + 'kmodel.sav'
+    loaded_model = pickle.load(open(filename, 'rb'))
+    return loaded_model
+
+
+start_time = time.time()
 image_df = file_traverse('dataset/')
 feature_list = []
 
 for index, row in image_df.iterrows():
     for feature in row['features'][1]:
         feature_list.append(feature)
-
 print(len(feature_list))
-
 feature_np = np.array(feature_list)
 
-kmeans = KMeans(n_clusters=10)
-kmeans.fit(feature_np)
-y_kmeans = kmeans.predict(feature_np)
 
-image_df['ymeans'] = y_kmeans
+model = train_kmeans(feature_np,50)
 
-writer = pandas.ExcelWriter('images.xlsx', engine='xlsxwriter')
-image_df.to_excel(writer, sheet_name='Sheet1')
-writer.save()
+y_kmeans = model.predict(feature_np)
+
+
+print("--- %s seconds ---" % (time.time() - start_time))
+
+# image_df['ymeans'] = y_kmeans
+#
+# writer = pandas.ExcelWriter('images.xlsx', engine='xlsxwriter')
+# image_df.to_excel(writer, sheet_name='Sheet1')
+# writer.save()
+
 
 # img = cv2.imread("dataset/camera/test/image_0027.jpg")
 # sift = cv2.xfeatures2d.SIFT_create()
