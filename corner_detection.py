@@ -57,7 +57,7 @@ def load_model(k):
     loaded_model = pickle.load(open(filename, 'rb'))
     return loaded_model
 
-
+k = 50
 start_time = time.time()
 image_df = file_traverse('dataset/')
 feature_list = []
@@ -68,19 +68,32 @@ for index, row in image_df.iterrows():
 print(len(feature_list))
 feature_np = np.array(feature_list)
 
-
-model = train_kmeans(feature_np,50)
-
+# model = train_kmeans(feature_np,k)
+model = load_model(k)
 y_kmeans = model.predict(feature_np)
 
+histogram = [int(0)] * k
+image_df['histogram'] = 0
+for index,row in image_df.iterrows():
+    row['histogram'] = np.zeros((k,), dtype=int)
+
+# histograms = [[0 for x in range(k)] for y in range(len(image_df))]
+
+pos = 0
+for index,row in image_df.iterrows():
+    for feature in row['features'][1]:
+        print(row['histogram'][y_kmeans[1635]])
+        row['histogram'][y_kmeans[pos]] += 1
+        # histograms[index][int(y_kmeans[pos])] += 1
+        pos += 1
 
 print("--- %s seconds ---" % (time.time() - start_time))
 
 # image_df['ymeans'] = y_kmeans
 #
-# writer = pandas.ExcelWriter('images.xlsx', engine='xlsxwriter')
-# image_df.to_excel(writer, sheet_name='Sheet1')
-# writer.save()
+writer = pandas.ExcelWriter('images.xlsx', engine='xlsxwriter')
+image_df.to_excel(writer, sheet_name='Sheet1')
+writer.save()
 
 
 # img = cv2.imread("dataset/camera/test/image_0027.jpg")
